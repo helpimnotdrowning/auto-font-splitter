@@ -16,3 +16,13 @@ ex.
 split -Source ./src -OutputDirectory ./out -CssFontPath /font/<XX>
 ```
 will read all woff2 files from `./src`, put the generated fonts in `./out` (where each font gets a subdirectory), with the `url()` in the generated CSS files being `url(/font/<font name>/<font file name>.woff2)`.
+
+---
+
+This project is licensed under the GNU GPLv3. You can see the license at
+[LICENSE.md](LICENSE.md)
+
+`split.ps1` uses a translation table from fontconfig weights to CSS weights that
+comes from Google's Skia code; its use is licenced under Google's Modified
+BSD/"BSD-3" terms (at least I think so). You can see the license, copyright
+notice, and disclaimer at [LICENSE.google.md](LICENSE.google.md)

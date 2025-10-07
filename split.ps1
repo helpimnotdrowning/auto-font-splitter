@@ -45,6 +45,24 @@ if (Test-Path -PathType Leaf $Source) {
 	$Files = gci $Source *.woff2
 }
 
+# via https://skia.googlesource.com/skia/+/refs/heads/main/src/ports/SkFontMgr_fontconfig.cpp#324
+# and https://api.skia.org/SkFontStyle_8h_source.html
+# translate weight from fontconfig to corresponding CSS weight
+$Fontconfig_to_CSS = @{
+	0   = 100  # thin
+	40  = 200  # extralight, ultralight
+	50  = 300  # light
+	55  = 350  # demilight, semilight
+	75  = 380  # book
+	80  = 400  # regular, normal
+	100 = 500  # medium
+	180 = 600  # demibold, semibold
+	200 = 700  # bold
+	205 = 800  # extrabold, ultrabold
+	210 = 900  # black,heavy
+	215 = 1000 # extrablack, ultrablack
+}
+
 $Files | % {
 	$ErrorActionPreference = 'Stop'
 	$PSNativeCommandUseErrorActionPreference = 'Stop'
@@ -52,6 +70,9 @@ $Files | % {
 	$Name = $_.BaseName
 	$Output = "$OutputDirectory/$Name"
 	$NewCss = "$Output/new.css"
+	
+	$FCWeight = [int] (fc-scan $_ -f '%{weight}')
+	$CssWeight = $Fontconfig_to_CSS[$FCWeight]
 	
 	$You = "$(id -u):$(id -g)"
 	mkdir $Output # OutputDirectory/font_name, we won't overwrite it
@@ -61,7 +82,11 @@ $Files | % {
 		-v "$Output`:/tmp/out" `
 		-u $You `
 		helpimnotdrowning/font-splitter `
-		$_.Name -o /tmp/out/ -c 128 -b ((nproc) - 2)
+			$_.Name `
+			--output /tmp/out/ `
+			--chunk 128 `
+			--batches ((nproc) - 2) `
+			--weight $CssWeight
 	$StartCss = (gi $Output/*.css | Select-Object -First 1)
 	
 	# order the files by lastmodified by their appearence order
@@ -111,3 +136,4 @@ $Files | % {
 	rm $StartCss
 	ren $NewCss $StartCss.Name
 }
+
